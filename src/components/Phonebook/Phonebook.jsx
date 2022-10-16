@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 
 import {
@@ -13,67 +14,57 @@ import ContactList from './ContactList/ContactList';
 import Message from './Message/Message';
 import ErrorBoundary from './ErrorBoundary/ErrorBoundary';
 
-export default class Phonebook extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
+const emptyContactsList = [];
 
-  componentDidMount() {
-    const contacts = JSON.parse(localStorage.getItem('contacts'));
-    if (contacts?.length) {
-      this.setState({ contacts });
-    }
-  }
+export default function Phonebook() {
 
-  componentDidUpdate(prevProps, prevState) {
-    const { contacts } = this.state;
-    if (prevState.contacts !== contacts) {
-      localStorage.setItem('contacts', JSON.stringify(contacts));
-    }
-  }
+  const [contacts, setContacts] = useState(() => {
+    const contactList = JSON.parse(localStorage.getItem('contacts'));
+    return contactList ?? emptyContactsList
+  })
 
-  addContacts = contact => {
-    if (this.isDuplicate(contact)) {
-      return alert(`${contact.name} is already in contacts`);
-    }
-    this.setState(prev => {
-      const newContact = {
-        id: nanoid(),
-        ...contact,
-      };
-      return {
-        contacts: [...prev.contacts, newContact],
-      };
-    });
-  };
+  const [filter, setFilter] = useState('');
 
-  deliteContact = id => {
-    this.setState(prev => {
-      const newContacts = prev.contacts.filter(item => item.id !== id);
-      return {
-        contacts: newContacts,
-      };
-    });
-  };
+  const length = contacts.length;
 
-  isDuplicate({ name, number }) {
-    const { contacts } = this.state;
+
+  useEffect(() => {
+    
+    return  localStorage.setItem('contacts', JSON.stringify(contacts));
+    
+  }, [contacts]);
+
+  const isDuplicate = ({ name, number }) => {
     const result = contacts.find(
       item =>
         item.name.toLowerCase() === name.toLowerCase() &&
         item.number.toLowerCase() === number.toLowerCase()
     );
     return result;
-  }
-
-  changeFilter = e => {
-    this.setState({ filter: e.currentTarget.value });
   };
 
-  getfiltredContacts() {
-    const { filter, contacts } = this.state;
+  const addContacts = contact => {
+    if (isDuplicate(contact)) {
+      return alert(`${contact.name} is already in contacts`);
+    }
+    setContacts(prev => {
+      const newContact = {
+        id: nanoid(),
+        ...contact,
+      };
+      return [...prev, newContact];
+    });
+  };
 
+  const deliteContact = id => {
+     setContacts(contacts.filter(item => item.id !== id))
+  };
+  
+  const changeFilter = e => {
+    setFilter({ filter: e.currentTarget.value });
+  };
+
+  const getfiltredContacts = () => {
     if (!filter) {
       return contacts;
     }
@@ -87,15 +78,11 @@ export default class Phonebook extends Component {
     return filteredContact;
   }
 
-  render() {
-    const { addContacts, deliteContact } = this;
-    const { filter } = this.state;
-    const changeFilter = this.changeFilter;
-    const contacts = this.getfiltredContacts();
-    const length = this.state.contacts.length;
+  const filterContacts = getfiltredContacts();
+ 
 
-    return (
-      <StyledPhonebookContainer>
+  return (
+    <StyledPhonebookContainer>
         <StyledPhonebookTitle> Phonebook</StyledPhonebookTitle>
         <ErrorBoundary>
           <ContactForm onSubmit={addContacts} />
@@ -104,12 +91,11 @@ export default class Phonebook extends Component {
         <ErrorBoundary>
           <Filter filter={filter} changeFilter={changeFilter} />
           {length > 0 ? (
-            <ContactList items={contacts} deliteContact={deliteContact} />
+            <ContactList items={filterContacts} deliteContact={deliteContact} />
           ) : (
             <Message text="Contact list is empty" />
           )}
         </ErrorBoundary>
       </StyledPhonebookContainer>
-    );
-  }
+  )
 }

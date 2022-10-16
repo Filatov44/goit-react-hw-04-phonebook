@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { StyledErrorBoundary } from 'components/Phonebook/ErrorBoundary/StyledErrorBoundary';
 
-
+// На хуках аналогов componentDidCatch нет
 
 export default class ErrorBoundary extends Component {
     state = {
